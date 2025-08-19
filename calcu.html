@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Accounting Calculator</title>
+  <style>
+    :root { --bg:#0b1020; --card:#141a2f; --ink:#e8ecf3; --muted:#9aa4b2; --accent:#6ea8fe; --line:#1f2749; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(120deg,#0b1020,#101735);}  
+    .wrap{max-width:1100px;margin:40px auto;padding:0 16px}
+    h1{color:var(--ink);margin:0 0 16px; font-size:32px;text-align:center; font-weight:700; line-height:1.2; text-transform:uppercase}
+    p{color:var(--muted)}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .tab{padding:10px 14px;border-radius:999px;background:#1d2544;color:#cfe1ff;border:1px solid #23305c;cursor:pointer}
+   /* Floating effect for both tab buttons and calculate buttons */
+    .tab, button {
+      transition: all 0.3s ease;
+      position: relative;}
+    .tab:hover, button:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 15px rgba(110, 168, 254, 0.5);}
+    .tab:active, button:active {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(110, 168, 254, 0.6);}
+    .section{display:none}
+    .section.active{display:block}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;color:var(--ink);box-shadow:0 10px 25px rgba(0,0,0,.25)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a365f;background:#0f1530;color:var(--ink);outline:none}
+    input:focus,select:focus{border-color:#5f8cf9}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btn{padding:10px 14px;border-radius:12px;border:1px solid #2a365f;background:#1b2344;color:#dbe7ff;cursor:pointer}
+    .btn.primary{background:var(--accent);color:#081226;border-color:#87bdff}
+    .btn.ghost{background:transparent}
+    .out{font-weight:700;font-size:18px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border-bottom:1px solid var(--line);padding:10px;text-align:right;color:var(--ink)}
+    th{color:#a9b7d6;text-align:right}
+    th:first-child,td:first-child{text-align:left}
+    .help{font-size:12px;color:#9aa4b2;margin-top:6px}
+    .footer{color:#93a0b8;font-size:12px;margin:26px 0;text-align:center}
+    .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px}
+    .kpi .card{padding:12px}
+    .kpi .label{font-size:12px;color:var(--muted)}
+    .kpi .value{font-size:18px;font-weight:700}
+    /* Add or update in your <style> section or style.css */
+    .tab:hover, .tab:focus {
+      background: #6ea8fe;
+      color: #081226;
+      border-color: #87bdff;
+      box-shadow: 0 6px 15px rgba(110, 168, 254, 0.5);
+      outline: none;
+    }
+    /* Add this to your <style> section or style.css */
+#loanExport:hover, #depExport:hover,
+#loanExport:focus, #depExport:focus {
+  background: #4ade80;         /* Light green */
+  color: #081226;
+  border-color: #22c55e;       /* Green border */
+  box-shadow: 0 6px 15px rgba(34,197,94,0.35);
+  outline: none;
+  transform: translateY(-4px);
+}
+
+#loanExport:active, #depExport:active {
+  background: #22c55e;         /* Deeper green on click */
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(34,197,94,0.45);
+}
+@keyframes fadeInTable {
+  from { opacity: 0; transform: translateY(30px);}
+  to   { opacity: 1; transform: translateY(0);}
+}
+.table-animate {
+  animation: fadeInTable 0.6s cubic-bezier(.4,2,.6,1);
+}
+button.touched {
+  background: #6ea8fe !important;
+  color: #081226 !important;
+  box-shadow: 0 6px 15px rgba(110, 168, 254, 0.5) !important;
+  transform: translateY(-4px) !important;
+}
+/* Green floating effect for export buttons */
+#loanExport, #depExport {
+  background: #22c55e;         /* Green background */
+  color: #fff;
+  border: 1px solid #22c55e;
+  transition: all 0.3s cubic-bezier(.4,2,.6,1);
+  position: relative;
+}
+
+#loanExport:hover, #depExport:hover,
+#loanExport:focus, #depExport:focus,
+#loanExport.touched, #depExport.touched {
+  background: #4ade80;         /* Lighter green */
+  color: #081226;
+  border-color: #22c55e;
+  box-shadow: 0 6px 15px rgba(34,197,94,0.35);
+  outline: none;
+  transform: translateY(-4px);
+}
+
+#loanExport:active, #depExport:active {
+  background: #16a34a;         /* Deeper green on click */
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(34,197,94,0.45);
+}
+@media (max-width: 600px) {
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  button, .btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Calculator for Accounting</h1>
+
+    <div class="tabs">
+      <button class="tab active" data-target="vat">VAT</button>
+      <button class="tab" data-target="loan">Loan (PMT + Schedule)</button>
+      <button class="tab" data-target="depr">Depreciation (SL / DDB / SYD)</button>
+      <button class="tab" data-target="markup">Markup / Markdown</button>
+      <button class="tab" data-target="breakeven">Break-even</button>
+    </div>
+
+    <!-- VAT -->
+    <div id="vat" class="section active">
+      <div class="card">
+        <div class="grid">
+          <div>
+            <label>Mode</label>
+            <select id="vatMode">
+              <option value="add">Add VAT to Net</option>
+              <option value="remove">Remove VAT from Gross</option>
+            </select>
+          </div>
+          <div>
+            <label>Amount</label>
+            <input id="vatAmount" type="number" step="0.01" placeholder="e.g., 1000" />
+          </div>
+          <div>
+            <label>VAT Rate (%)</label>
+            <input id="vatRate" type="number" step="0.01" value="12" />
+          </div>
+        </div>
+        <div class="grid" style="margin-top:12px">
+          <div>
+            <label>Net</label>
+            <div id="netOut" class="out">—</div>
+          </div>
+          <div>
+            <label>VAT</label>
+            <div id="vatOut" class="out">—</div>
+          </div>
+          <div>
+            <label>Gross</label>
+            <div id="grossOut" class="out">—</div>
+          </div>
+        </div>
+        <div class="help">Tip: Adjust rate (e.g., 12%) to match your jurisdiction.</div>
+      </div>
+    </div>
+
+    <!-- Loan PMT + Schedule -->
+    <div id="loan" class="section">
+      <div class="card">
+        <div class="grid">
+          <div>
+            <label>Principal</label>
+            <input id="loanP" type="number" step="0.01" placeholder="e.g., 150000" />
+          </div>
+          <div>
+            <label>Annual Interest (%)</label>
+            <input id="loanAPR" type="number" step="0.001" placeholder="e.g., 8" />
+          </div>
+          <div>
+            <label>Term (years)</label>
+            <input id="loanYears" type="number" step="1" placeholder="e.g., 3" />
+          </div>
+          <div>
+            <label>Payments per Year</label>
+            <input id="loanPPY" type="number" step="1" value="12" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button id="loanCalc" class="btn primary">Calculate</button>
+          <button id="loanExport" class="btn">Export Schedule (CSV)</button>
+          <div class="help">PMT uses period rate = APR / payments per year.</div>
+        </div>
+        <div class="kpi">
+          <div class="card"><div class="label">Payment / Period</div><div id="pmtOut" class="value">—</div></div>
+          <div class="card"><div class="label">Total Interest</div><div id="intOut" class="value">—</div></div>
+          <div class="card"><div class="label">Total Paid</div><div id="totOut" class="value">—</div></div>
+        </div>
+        <table id="amTable" style="display:none">
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th>Payment</th>
+              <th>Interest</th>
+              <th>Principal</th>
+              <th>Balance</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Depreciation -->
+    <div id="depr" class="section">
+      <div class="card">
+        <div class="grid">
+          <div>
+            <label>Method</label>
+            <select id="depMethod">
+              <option value="SL">Straight-line (SL)</option>
+              <option value="DDB">Double-Declining Balance (DDB)</option>
+              <option value="SYD">Sum-of-Years-Digits (SYD)</option>
+            </select>
+          </div>
+          <div>
+            <label>Asset Cost</label>
+            <input id="depCost" type="number" step="0.01" placeholder="e.g., 100000" />
+          </div>
+          <div>
+            <label>Salvage Value</label>
+            <input id="depSalvage" type="number" step="0.01" value="0" />
+          </div>
+          <div>
+            <label>Useful Life (years)</label>
+            <input id="depLife" type="number" step="1" placeholder="e.g., 5" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button id="depCalc" class="btn primary">Build Schedule</button>
+          <button id="depExport" class="btn">Export (CSV)</button>
+        </div>
+        <div class="kpi">
+          <div class="card"><div class="label">Annual Depreciation (Year 1)</div><div id="depAnnual" class="value">—</div></div>
+          <div class="card"><div class="label">Monthly (Year 1)</div><div id="depMonthly" class="value">—</div></div>
+        </div>
+        <table id="depTable" style="display:none">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Beg. Book</th>
+              <th>Depreciation</th>
+              <th>Accum. Depreciation</th>
+              <th>End Book</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="help">DDB switches to straight-line automatically when SL is higher for the remaining life to avoid undershooting salvage.</div>
+      </div>
+    </div>
+
+    <!-- Markup / Markdown -->
+    <div id="markup" class="section">
+      <div class="card">
+        <div class="grid">
+          <div>
+            <label>Cost</label>
+            <input id="mkCost" type="number" step="0.01" placeholder="e.g., 350" />
+          </div>
+          <div>
+            <label>Percent (%)</label>
+            <input id="mkPct" type="number" step="0.01" placeholder="e.g., 25" />
+          </div>
+          <div>
+            <label>Operation</label>
+            <select id="mkOp">
+              <option value="markup-on-cost">Markup on Cost</option>
+              <option value="markup-on-selling">Markup on Selling Price</option>
+              <option value="markdown">Markdown from Original Price</option>
+              <option value="margin">Find Margin % (given cost & price)</option>
+            </select>
+          </div>
+          <div id="mkExtra" style="display:none">
+            <label>Extra Amount (Selling Price / Original Price)</label>
+            <input id="mkExtraVal" type="number" step="0.01" placeholder="e.g., 500" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button id="mkCalc" class="btn primary">Calculate</button>
+        </div>
+        <div class="kpi">
+          <div class="card"><div class="label">Result A</div><div id="mkOutA" class="value">—</div></div>
+          <div class="card"><div class="label">Result B</div><div id="mkOutB" class="value">—</div></div>
+        </div>
+        <div class="help">Markup-on-selling means % is based on final price (common exam trick!).</div>
+      </div>
+    </div>
+
+    <!-- Break-even -->
+    <div id="breakeven" class="section">
+      <div class="card">
+        <div class="grid">
+          <div>
+            <label>Selling Price per Unit</label>
+            <input id="bePrice" type="number" step="0.01" placeholder="e.g., 100" />
+          </div>
+          <div>
+            <label>Variable Cost per Unit</label>
+            <input id="beVar" type="number" step="0.01" placeholder="e.g., 60" />
+          </div>
+          <div>
+            <label>Fixed Costs (per period)</label>
+            <input id="beFixed" type="number" step="0.01" placeholder="e.g., 20000" />
+          </div>
+          <div>
+            <label>Target Profit (optional)</label>
+            <input id="beTarget" type="number" step="0.01" value="0" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button id="beCalc" class="btn primary">Compute</button>
+        </div>
+        <div class="kpi">
+          <div class="card"><div class="label">Contribution Margin / Unit</div><div id="beCM" class="value">—</div></div>
+          <div class="card"><div class="label">Break-even Units</div><div id="beUnits" class="value">—</div></div>
+          <div class="card"><div class="label">Break-even Sales</div><div id="beSales" class="value">—</div></div>
+          <div class="card"><div class="label">Units for Target Profit</div><div id="beUnitsTP" class="value">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Built for PLV accounting students. Verify with course policies/rates. — Credits to Clark Daren for creating this.</div>
+  </div>
+
+  <script>
+    // === Helpers ===
+    const fmt = new Intl.NumberFormat('en-PH', { style:'currency', currency:'PHP' });
+    const toNum = el => Number.parseFloat(el.value || '0');
+    const show = (id, val) => document.getElementById(id).textContent = val;
+    const round2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).classList.add('active');
+      });
+    });
+
+    // === VAT ===
+    function computeVAT(){
+      const mode = document.getElementById('vatMode').value;
+      const amt = toNum(document.getElementById('vatAmount'));
+      const rate = toNum(document.getElementById('vatRate')) / 100;
+      if(amt <= 0 || rate < 0){ show('netOut','—'); show('vatOut','—'); show('grossOut','—'); return; }
+      let net, vat, gross;
+      if(mode === 'add'){ net = amt; gross = net * (1 + rate); vat = gross - net; }
+      else { gross = amt; net = gross / (1 + rate); vat = gross - net; }
+      show('netOut', fmt.format(round2(net)));
+      show('vatOut', fmt.format(round2(vat)));
+      show('grossOut', fmt.format(round2(gross)));
+    }
+    ['vatMode','vatAmount','vatRate'].forEach(id=>document.getElementById(id).addEventListener('input', computeVAT));
+    computeVAT();
+
+    // === Loan PMT + Schedule ===
+    let lastSchedule = [];
+    document.getElementById('loanCalc').addEventListener('click', ()=>{
+      const P = toNum(document.getElementById('loanP'));
+      const apr = toNum(document.getElementById('loanAPR'))/100;
+      const years = toNum(document.getElementById('loanYears'));
+      const ppy = Math.max(1, Math.floor(toNum(document.getElementById('loanPPY'))));
+      const amTbl = document.getElementById('amTable');
+      const tbody = amTbl.querySelector('tbody');
+      tbody.innerHTML = '';
+      lastSchedule = [];
+      if(P<=0 || apr<0 || years<=0){ show('pmtOut','—'); show('intOut','—'); show('totOut','—'); amTbl.style.display='none'; return; }
+      const r = apr/ppy;
+      const n = years*ppy;
+      const pmt = r === 0 ? P/n : P * (r) / (1 - Math.pow(1 + r, -n));
+      let balance = P;
+      let totalInterest = 0;
+      for(let i=1;i<=n;i++){
+        const interest = r === 0 ? 0 : balance * r;
+        let principal = pmt - interest;
+        if(i===n){ // fix rounding on last payment
+          principal = balance;
+        }
+        balance = Math.max(0, balance - principal);
+        totalInterest += interest;
+        lastSchedule.push({ period:i, payment:pmt, interest, principal, balance });
+      }
+      show('pmtOut', fmt.format(round2(pmt)));
+      show('intOut', fmt.format(round2(totalInterest)));
+      show('totOut', fmt.format(round2(P + totalInterest)));
+      // render first 360 rows fine
+      for(const row of lastSchedule){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.period}</td>
+          <td style="text-align:right">${fmt.format(round2(row.payment))}</td>
+          <td style="text-align:right">${fmt.format(round2(row.interest))}</td>
+          <td style="text-align:right">${fmt.format(round2(row.principal))}</td>
+          <td style="text-align:right">${fmt.format(round2(row.balance))}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+      amTbl.style.display = 'table';
+      amTbl.classList.remove('table-animate');
+      void amTbl.offsetWidth; // force reflow for repeat animation
+      amTbl.classList.add('table-animate');
+    });
+
+    document.getElementById('loanExport').addEventListener('click', ()=>{
+      if(!lastSchedule.length){ alert('Compute a schedule first.'); return; }
+      const header = 'Period,Payment,Interest,Principal,Balance\n';
+      const lines = lastSchedule.map(r=>[
+        r.period,
+        round2(r.payment),
+        round2(r.interest),
+        round2(r.principal),
+        round2(r.balance)
+      ].join(','));
+      downloadCSV(header + lines.join('\n'), 'amortization_schedule.csv');
+    });
+
+    // === Depreciation Schedules ===
+    let lastDep = [];
+    document.getElementById('depCalc').addEventListener('click', ()=>{
+      const method = document.getElementById('depMethod').value;
+      const cost = toNum(document.getElementById('depCost'));
+      const salvage = toNum(document.getElementById('depSalvage'));
+      const life = Math.max(1, Math.floor(toNum(document.getElementById('depLife'))));
+      const depTbl = document.getElementById('depTable');
+      const tbody = depTbl.querySelector('tbody');
+      tbody.innerHTML = '';
+      lastDep = [];
+      if(cost<=0 || salvage<0 || salvage>=cost){ show('depAnnual','—'); show('depMonthly','—'); depTbl.style.display='none'; return; }
+
+      let sched = [];
+      if(method==='SL'){
+        const annual = (cost - salvage)/life;
+        let acc = 0; let beg = cost; let end;
+        for(let y=1;y<=life;y++){
+          const dep = (y===life) ? (beg - salvage) : annual; // adjust last year
+          acc += dep; end = beg - dep;
+          sched.push({year:y,beg,dep,acc,end});
+          beg = end;
+        }
+      } else if(method==='DDB'){
+        let rate = (2/life);
+        let beg = cost; let acc = 0;
+        for(let y=1;y<=life;y++){
+          // Compute DDB and compare with SL remaining
+          const ddb = beg * rate;
+          const yearsLeft = life - y + 1;
+          const slRemaining = (beg - salvage) / yearsLeft;
+          const dep = Math.min(ddb, slRemaining);
+          const end = Math.max(salvage, beg - dep);
+          acc += dep;
+          sched.push({year:y,beg,dep,acc,end});
+          beg = end;
+        }
+      } else if(method==='SYD'){
+        const syd = life * (life + 1) / 2;
+        let beg = cost; let acc = 0;
+        for(let y=1;y<=life;y++){
+          const factor = (life - y + 1) / syd; // remaining life weighting
+          const dep = (cost - salvage) * factor;
+          const end = beg - dep;
+          acc += dep;
+          sched.push({year:y,beg,dep,acc,end});
+          beg = end;
+        }
+      }
+
+      if(sched.length){
+        const firstAnnual = sched[0].dep;
+        show('depAnnual', fmt.format(round2(firstAnnual)));
+        show('depMonthly', fmt.format(round2(firstAnnual/12)));
+      }
+      for(const r of sched){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.year}</td>
+          <td>${fmt.format(round2(r.beg))}</td>
+          <td>${fmt.format(round2(r.dep))}</td>
+          <td>${fmt.format(round2(r.acc))}</td>
+          <td>${fmt.format(round2(r.end))}</td>`;
+        tbody.appendChild(tr);
+      }
+      lastDep = sched;
+      depTbl.style.display = sched.length ? 'table' : 'none';
+      if(sched.length){
+        depTbl.classList.remove('table-animate');
+        void depTbl.offsetWidth;
+        depTbl.classList.add('table-animate');
+      }
+    });
+
+    document.getElementById('depExport').addEventListener('click', ()=>{
+      if(!lastDep.length){ alert('Build a depreciation schedule first.'); return; }
+      const header = 'Year,BegBook,Depreciation,AccumDep,EndBook\n';
+      const lines = lastDep.map(r=>[
+        r.year, round2(r.beg), round2(r.dep), round2(r.acc), round2(r.end)
+      ].join(','));
+      downloadCSV(header + lines.join('\n'), 'depreciation_schedule.csv');
+    });
+
+    // === Markup / Markdown ===
+    const mkOp = document.getElementById('mkOp');
+    mkOp.addEventListener('change', ()=>{
+      document.getElementById('mkExtra').style.display = ['markdown','margin'].includes(mkOp.value) ? 'block' : (mkOp.value==='markup-on-selling' ? 'none' : 'none');
+      // For margin we need selling price as extra
+      if(mkOp.value==='margin') document.getElementById('mkExtra').style.display='block';
+    });
+    document.getElementById('mkCalc').addEventListener('click', ()=>{
+      const cost = toNum(document.getElementById('mkCost'));
+      const pct = toNum(document.getElementById('mkPct'))/100;
+      const op = document.getElementById('mkOp').value;
+      const extra = toNum(document.getElementById('mkExtraVal'));
+      let a='—', b='—';
+      if(op==='markup-on-cost' && cost>0){
+        const price = cost * (1 + pct);
+        a = 'Selling Price'; b = fmt.format(round2(price));
+      } else if(op==='markup-on-selling' && cost>0){
+        // price = cost / (1 - pct)
+        if(pct>=1){ a='Error'; b='Percent must be < 100%'; }
+        else { const price = cost / (1 - pct); a='Selling Price'; b = fmt.format(round2(price)); }
+      } else if(op==='markdown' && extra>0){
+        const price = extra * (1 - pct);
+        a = 'New Price'; b = fmt.format(round2(price));
+      } else if(op==='margin' && cost>0 && extra>0){
+        const margin = (extra - cost) / extra; // as % of selling
+        a = 'Margin %'; b = (margin*100).toFixed(2) + '%';
+      }
+      show('mkOutA', a); show('mkOutB', b);
+    });
+
+    // === Break-even ===
+    document.getElementById('beCalc').addEventListener('click', ()=>{
+      const price = toNum(document.getElementById('bePrice'));
+      const varc = toNum(document.getElementById('beVar'));
+      const fixed = toNum(document.getElementById('beFixed'));
+      const target = toNum(document.getElementById('beTarget'));
+      if(price<=0 || varc<0 || fixed<0 || price<=varc){
+        show('beCM','—'); show('beUnits','—'); show('beSales','—'); show('beUnitsTP','—'); return;
+      }
+      const cm = price - varc;
+      const units = Math.ceil((fixed) / cm);
+      const sales = units * price;
+      const unitsTP = Math.ceil((fixed + target) / cm);
+      show('beCM', fmt.format(round2(cm)));
+      show('beUnits', units.toString());
+      show('beSales', fmt.format(round2(sales)));
+      show('beUnitsTP', unitsTP.toString());
+    });
+
+    // === CSV download helper ===
+    function downloadCSV(text, filename){
+      const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.style.display='none';
+      document.body.appendChild(a); a.click();
+      URL.revokeObjectURL(url); a.remove();
+    }
+
+    document.querySelectorAll('button, .btn').forEach(btn => {
+  btn.addEventListener('touchstart', () => btn.classList.add('touched'));
+  btn.addEventListener('touchend', () => btn.classList.remove('touched'));
+  btn.addEventListener('touchcancel', () => btn.classList.remove('touched'));
+});
+  </script>
+</body>
+</html>
